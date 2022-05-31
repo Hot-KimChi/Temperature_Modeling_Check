@@ -57,9 +57,9 @@ def func_sql_get(server_address, ID, password, list_databases, query=None):
                     '''
 
             Raw_data = pd.read_sql(sql=query, con=conn)
-            AOP_data = Raw_data.dropna()
-            AOP_data['system'] = f'{database}'
-            AOP_data = AOP_data.append(AOP_data, ignore_index=True)                                                     ## DataFrame append할 경우, 동일한 parameter 갯수.
+            # AOP_data = Raw_data.dropna()
+            Raw_data.insert(0, "Database", f'{database}', True)
+            AOP_data = Raw_data.append(Raw_data, ignore_index=True)                                                     ## DataFrame append할 경우, 동일한 parameter 갯수. // ignore_index(True) 인덱스가 기존해의 뒷 번호로 지정
 
         print(Raw_data['probeId'].value_counts(dropna=False))
 
@@ -92,3 +92,4 @@ if __name__ == '__main__':
     server_address, ID, password, list_databases = func_conf_get()
     AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
     print(AOP_data.head())
+    print(len(AOP_data.index))
