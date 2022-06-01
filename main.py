@@ -152,6 +152,7 @@ def func_machine_learning(selected_ML, data, target):
             print('|(타깃 - 예측값)|:', mae)
             print(df_import)
 
+
     except():
         print('error: func_machine_learning')
 
