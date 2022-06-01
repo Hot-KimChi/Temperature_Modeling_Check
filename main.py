@@ -54,6 +54,7 @@ def func_sql_get(server_address, ID, password, list_databases, query=None):
                     LEFT JOIN probe_geo AS b
                         ON a.[probeId] = b.[probeId]
                     where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
+                    --where a.probeId < 99999999 and (a.measSetNum = 4)
                     ORDER BY 1
                     '''
 
@@ -94,10 +95,11 @@ def func_preprocess(AOP_data):
     try:
         Nor_temp = []
         probeType = []
+
         for temp, amb, prf, probe_type in zip(AOP_data['temperatureC'], AOP_data['roomTempC'], AOP_data['pulseRepetRate'], AOP_data['probeDescription']):
             Nor_temp.append((temp - amb) / prf)
 
-            if "Convex" in probe_type:
+            if "Convex" or "Curved" in probe_type:
                 probeType.append(0)
             elif "Linear" in probe_type:
                 probeType.append(1)
@@ -108,12 +110,14 @@ def func_preprocess(AOP_data):
         AOP_data['Nor_Temp'] = Nor_temp
         AOP_data = AOP_data.fillna(0)
 
+        print(AOP_data.head())
+
         data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                          'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'probePitchCm', 'probeRadiusCm',
                          'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
                          'probeType']].to_numpy()
 
-        target = AOP_data[['Nor_Temp']].to_numpy()
+        target = AOP_data['Nor_Temp'].to_numpy()
 
         return data, target
 
@@ -160,7 +164,6 @@ def func_machine_learning(selected_ML, data, target):
 if __name__ == '__main__':
     server_address, ID, password, list_databases = func_conf_get()
     AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
-    print(AOP_data.head())
     print(len(AOP_data.index))
     data, target = func_preprocess(AOP_data=AOP_data)
     func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
