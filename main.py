@@ -2,13 +2,14 @@ import tkinter
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
-
 import configparser
-
 import numpy as np
 import pandas as pd
 import pymssql
 
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import mean_absolute_error
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
@@ -84,8 +85,75 @@ def func_conf_get():
 
         return server_address, ID, password, list_databases
 
+
     except():
         print('error: func_conf_get')
+
+
+def func_preprocess(AOP_data):
+    try:
+        Nor_temp = []
+        probeType = []
+        for temp, amb, prf, probe_type in zip(AOP_data['temperatureC'], AOP_data['roomTempC'], AOP_data['pulseRepetRate'], AOP_data['probeDescription']):
+            Nor_temp.append((temp - amb) / prf)
+
+            if "Convex" in probe_type:
+                probeType.append(0)
+            elif "Linear" in probe_type:
+                probeType.append(1)
+            else:                       ## Phased
+                probeType.append(2)
+
+        AOP_data['probeType'] = probeType
+        AOP_data['Nor_Temp'] = Nor_temp
+        AOP_data = AOP_data.fillna(0)
+
+        data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+                         'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'probePitchCm', 'probeRadiusCm',
+                         'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
+                         'probeType']].to_numpy()
+
+        target = AOP_data[['Nor_Temp']].to_numpy()
+
+        return data, target
+
+    except():
+        print('error: func_preprocess')
+
+def func_machine_learning(selected_ML, data, target):
+    try:
+        train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2)
+
+        ## Random Forest 훈련하기.
+        if selected_ML == 'RandomForestRegressor':
+            from sklearn.ensemble import RandomForestRegressor
+            rf = RandomForestRegressor(n_jobs=-1)
+            scores = cross_validate(rf, train_input, train_target, return_train_score=True, n_jobs=-1)
+            print()
+            print(scores)
+            print('Random Forest - Train R^2:', np.round_(np.mean(scores['train_score']), 3))
+            print('Random Forest - Train_validation R^2:', np.round_(np.mean(scores['test_score']), 3))
+
+            rf.fit(train_input, train_target)
+            print('Random Forest - Test R^2:', np.round_(rf.score(test_input, test_target), 3))
+            prediction = np.round_(rf.predict(test_input), 2)
+
+            df_import = pd.DataFrame()
+            df_import = df_import.append(pd.DataFrame([np.round((rf.feature_importances_) * 100, 2)],
+                                                      columns=['probeId', 'pulseVoltage', 'numTxCycles',
+                                                               'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+                                                               'isTxAperModulationEn', 'txpgWaveformStyle',
+                                                               'scanRange', 'probePitchCm', 'probeRadiusCm',
+                                                               'probeElevAperCm0', 'probeElevAperCm1',
+                                                               'probeNumElements', 'probeElevFocusRangCm',
+                                                               'probeType']), ignore_index=True)
+
+            mae = mean_absolute_error(test_target, prediction)
+            print('|(타깃 - 예측값)|:', mae)
+            print(df_import)
+
+    except():
+        print('error: func_machine_learning')
 
 
 if __name__ == '__main__':
@@ -93,3 +161,5 @@ if __name__ == '__main__':
     AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
     print(AOP_data.head())
     print(len(AOP_data.index))
+    data, target = func_preprocess(AOP_data=AOP_data)
+    func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
