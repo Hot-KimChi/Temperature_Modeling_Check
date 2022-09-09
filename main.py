@@ -174,6 +174,7 @@ def func_machine_learning(selected_ML, data, target):
         print('error: func_machine_learning')
 
 
+## main 
 if __name__ == '__main__':
     server_address, ID, password, list_databases = func_conf_get()
     AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
