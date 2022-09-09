@@ -157,6 +157,19 @@ def func_machine_learning(selected_ML, data, target):
             print(df_import)
 
 
+            ## modeling file 저장 장소.
+            newpath = './Model'
+            if not os.path.exists(newpath):
+                os.makedirs(newpath)
+            joblib.dump(model, f'Model/{selected_ML}_v1_python37.pkl')
+
+            
+            if selected_ML == 'RandomForestRegressor':
+                func_feature_import()
+            else:
+                pass
+
+
     except():
         print('error: func_machine_learning')
 
