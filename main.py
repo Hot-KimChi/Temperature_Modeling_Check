@@ -58,6 +58,7 @@ def func_sql_get(server_address, ID, password, list_databases, query=None):
                     ORDER BY 1
                     '''
 
+
             Raw_data = pd.read_sql(sql=query, con=conn)
             # AOP_data = Raw_data.dropna()
             Raw_data.insert(0, "Database", f'{database}', True)
