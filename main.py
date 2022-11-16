@@ -6,6 +6,8 @@ import configparser
 import numpy as np
 import pandas as pd
 import pymssql
+import os
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate
@@ -132,19 +134,19 @@ def func_machine_learning(selected_ML, data, target):
         ## Random Forest 훈련하기.
         if selected_ML == 'RandomForestRegressor':
             from sklearn.ensemble import RandomForestRegressor
-            rf = RandomForestRegressor(n_jobs=-1)
-            scores = cross_validate(rf, train_input, train_target, return_train_score=True, n_jobs=-1)
+            model = RandomForestRegressor(n_jobs=-1)
+            scores = cross_validate(model, train_input, train_target, return_train_score=True, n_jobs=-1)
             print()
             print(scores)
             print('Random Forest - Train R^2:', np.round_(np.mean(scores['train_score']), 3))
             print('Random Forest - Train_validation R^2:', np.round_(np.mean(scores['test_score']), 3))
 
-            rf.fit(train_input, train_target)
-            print('Random Forest - Test R^2:', np.round_(rf.score(test_input, test_target), 3))
-            prediction = np.round_(rf.predict(test_input), 2)
+            model.fit(train_input, train_target)
+            print('Random Forest - Test R^2:', np.round_(model.score(test_input, test_target), 3))
+            prediction = np.round_(model.predict(test_input), 2)
 
             df_import = pd.DataFrame()
-            df_import = df_import.append(pd.DataFrame([np.round((rf.feature_importances_) * 100, 2)],
+            df_import = df_import.append(pd.DataFrame([np.round((model.feature_importances_) * 100, 2)],
                                                       columns=['probeId', 'pulseVoltage', 'numTxCycles',
                                                                'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                                                                'isTxAperModulationEn', 'txpgWaveformStyle',
@@ -158,17 +160,18 @@ def func_machine_learning(selected_ML, data, target):
             print(df_import)
 
 
-            ## modeling file 저장 장소.
-            newpath = './Model'
-            if not os.path.exists(newpath):
-                os.makedirs(newpath)
-            joblib.dump(model, f'Model/{selected_ML}_v1_python37.pkl')
+        ## modeling file 저장 장소.
+        newpath = './Model'
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+        joblib.dump(model, f'Model/{selected_ML}_v1_python37.pkl')
 
-            
-            if selected_ML == 'RandomForestRegressor':
-                func_feature_import()
-            else:
-                pass
+
+        if selected_ML == 'RandomForestRegressor':
+            pass
+            # func_feature_import()
+        else:
+            pass
 
 
     except():
