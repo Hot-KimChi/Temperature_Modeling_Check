@@ -127,6 +127,7 @@ def func_preprocess(AOP_data):
     except():
         print('error: func_preprocess')
 
+
 def func_machine_learning(selected_ML, data, target):
     try:
         train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2)
@@ -174,16 +175,24 @@ def func_machine_learning(selected_ML, data, target):
         else:
             pass
 
-
     except():
         print('error: func_machine_learning')
 
 
 ## main 
 if __name__ == '__main__':
-    server_address, ID, password, list_databases = func_conf_get()
-    AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
-    print(len(AOP_data.index))
-    data, target = func_preprocess(AOP_data=AOP_data)
-    ## RandomForestRegressor
-    func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
+    case = 'model_update'
+    
+    if case == 'model_fit':
+        server_address, ID, password, list_databases = func_conf_get()
+        AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
+        print(len(AOP_data.index))
+        data, target = func_preprocess(AOP_data=AOP_data)
+        ## RandomForestRegressor
+        func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
+    
+    if case == 'model_predict':
+        loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
+        
+        
+        
