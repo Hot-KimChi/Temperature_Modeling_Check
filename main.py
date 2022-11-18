@@ -192,6 +192,11 @@ if __name__ == '__main__':
         func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
     
     if case == 'model_predict':
+        server_address = 'kr001s1804srv'
+        ID = 'sel02776'
+        password = '1qaz!QAZ'
+        list_databases = 'New_Trees'
+        AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
         loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
         
         
