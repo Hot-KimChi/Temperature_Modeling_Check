@@ -197,6 +197,7 @@ if __name__ == '__main__':
         password = '1qaz!QAZ'
         list_databases = 'New_Trees'
         AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
+        data, target
         loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
         
         
