@@ -128,6 +128,9 @@ def func_preprocess(AOP_data):
         print('error: func_preprocess')
 
 
+def func_evaluate()
+
+
 def func_machine_learning(selected_ML, data, target):
     try:
         train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2)
@@ -190,6 +193,7 @@ if __name__ == '__main__':
         data, target = func_preprocess(AOP_data=AOP_data)
         ## RandomForestRegressor
         func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
+    
     
     if case == 'model_predict':
         server_address = 'kr001s1804srv'
