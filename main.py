@@ -19,10 +19,15 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 
-def func_sql_get(server_address, ID, password, list_databases, query=None):
+def func_sql_get(server_address, ID, password, list_databases, export_database=None, query=None):
     try:
-        for database in list_databases:
+        if case == 'model_fit':
+            sel_database = list_databases
+        else:
+            sel_database = export_database
 
+        print(sel_database)
+        for database in [sel_database]:
             print(database)
             conn = pymssql.connect(server_address, ID, password, database=database)
 
@@ -60,7 +65,6 @@ def func_sql_get(server_address, ID, password, list_databases, query=None):
                     ORDER BY 1
                     '''
 
-
             Raw_data = pd.read_sql(sql=query, con=conn)
             # AOP_data = Raw_data.dropna()
             Raw_data.insert(0, "Database", f'{database}', True)
@@ -82,12 +86,13 @@ def func_conf_get():
 
         server_address = config["server address"]["address"]
         databases = config["database"]["name"]
+        export_database = config["export database"]["name"]
         ID = config["username"]["ID"]
         password = config["password"]["PW"]
 
         list_databases = databases.split(',')
 
-        return server_address, ID, password, list_databases
+        return server_address, ID, password, list_databases, export_database
 
 
     except():
@@ -100,6 +105,7 @@ def func_preprocess(AOP_data):
         probeType = []
 
         for temp, amb, prf, probe_type in zip(AOP_data['temperatureC'], AOP_data['roomTempC'], AOP_data['pulseRepetRate'], AOP_data['probeDescription']):
+            
             Nor_temp.append((temp - amb) / prf)
 
             if "Convex" or "Curved" in probe_type:
@@ -126,9 +132,6 @@ def func_preprocess(AOP_data):
 
     except():
         print('error: func_preprocess')
-
-
-def func_evaluate()
 
 
 def func_machine_learning(selected_ML, data, target):
@@ -184,7 +187,7 @@ def func_machine_learning(selected_ML, data, target):
 
 ## main 
 if __name__ == '__main__':
-    case = 'model_update'
+    case = 'model_predict'
     
     if case == 'model_fit':
         server_address, ID, password, list_databases = func_conf_get()
@@ -196,13 +199,20 @@ if __name__ == '__main__':
     
     
     if case == 'model_predict':
-        server_address = 'kr001s1804srv'
-        ID = 'sel02776'
-        password = '1qaz!QAZ'
-        list_databases = 'New_Trees'
-        AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
-        data, target
+        server_address, ID, password, list_databases, export_database = func_conf_get()
+        AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases, export_database=export_database)
+
+        data, target = func_preprocess(AOP_data=AOP_data)
+
         loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
+        temperature_est = loaded_model.predict(data)
+        df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
         
+        AOP_data['temperature_est'] = df_temperature_est
+        AOP_data.to_csv("temperature_est.csv")
+
+        print(AOP_data)
+        
+
         
         
