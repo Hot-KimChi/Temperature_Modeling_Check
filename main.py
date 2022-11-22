@@ -27,7 +27,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             sel_database = export_database
 
         print(sel_database)
-        for database in [sel_database]:
+        for database in sel_database:
             print(database)
             conn = pymssql.connect(server_address, ID, password, database=database)
 
@@ -187,7 +187,7 @@ def func_machine_learning(selected_ML, data, target):
 
 ## main 
 if __name__ == '__main__':
-    case = 'model_predict'
+    case = 'model_fit'
     
     if case == 'model_fit':
         server_address, ID, password, list_databases = func_conf_get()

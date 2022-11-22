@@ -24,9 +24,10 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
         if case == 'model_fit':
             sel_database = list_databases
         else:
-            sel_database = export_database
+            sel_database = [export_database]
+        print(sel_database)
 
-        for database in [sel_database]:
+        for database in sel_database:
             print(database)
             conn = pymssql.connect(server_address, ID, password, database=database)
 
@@ -113,7 +114,7 @@ def func_preprocess(AOP_data):
                 SR = 0.001
             else:
                 SR = scanrange
-            energy.append(volt * volt * cycle * element * prf * pitch/SR)
+            energy.append(volt * volt * cycle * element * prf * pitch / SR)
 
             if "Convex" or "Curved" in probe_type:
                 probeType.append(0)
@@ -175,6 +176,21 @@ def func_machine_learning(selected_ML, data, target):
             os.makedirs(newpath)
         joblib.dump(model, f'Model/{selected_ML}_v1_python37.pkl')
 
+        loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
+        temperature_est = loaded_model.predict(test_input)
+        df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
+
+        df = pd.DataFrame(test_input, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements',
+                                               'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+                                               'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+                                               'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements',
+                                               'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
+
+        df_temp = pd.DataFrame(test_target, columns=['temperatureC'])
+        df['temperatureC'] = df_temp
+        df['temperature_est'] = df_temperature_est
+        df.to_csv("temperature_test_input_est.csv")
+
         if selected_ML == 'RandomForestRegressor':
             pass
             # func_feature_import()
@@ -198,6 +214,7 @@ if __name__ == '__main__':
         ## RandomForestRegressor
         func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
 
+
     if case == 'model_predict':
         server_address, ID, password, list_databases, export_database = func_conf_get()
         AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases,
@@ -209,7 +226,17 @@ if __name__ == '__main__':
         temperature_est = loaded_model.predict(data)
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
-        AOP_data['temperature_est'] = df_temperature_est
-        AOP_data.to_csv("temperature_est.csv")
+        df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements',
+                                               'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+                                               'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+                                               'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
+                                               'probeNumElements',
+                                               'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
 
-        print(AOP_data)
+        df_temp = pd.DataFrame(target, columns=['temperatureC'])
+
+        df['temperatureC'] = df_temp
+        df['temperature_est'] = df_temperature_est
+        df.to_csv("temperature_est.csv")
+
+        print(df)
