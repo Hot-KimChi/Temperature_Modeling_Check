@@ -239,4 +239,6 @@ if __name__ == '__main__':
         df['temperature_est'] = df_temperature_est
         df.to_csv("temperature_est.csv")
 
-        print(df)
+        print(df.head())
+        mae = mean_absolute_error(target, temperature_est)
+        print('|(타깃 - 예측값)|:', mae)
