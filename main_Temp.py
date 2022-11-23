@@ -24,6 +24,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
         if case == 'model_fit':
             sel_database = list_databases
         else:
+            ## export_database가 string으로 인식할 수 있기에 list로 변환.
             sel_database = [export_database]
         print(sel_database)
 
@@ -68,8 +69,9 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             Raw_data = pd.read_sql(sql=query, con=conn)
             # AOP_data = Raw_data.dropna()
             Raw_data.insert(0, "Database", f'{database}', True)
-            AOP_data = Raw_data.append(Raw_data,
-                                       ignore_index=True)  ## DataFrame append할 경우, 동일한 parameter 갯수. // ignore_index(True) 인덱스가 기존해의 뒷 번호로 지정
+            
+            ## DataFrame append할 경우, 동일한 parameter 갯수. // ignore_index(True) 인덱스가 기존해의 뒷 번호로 지정
+            AOP_data = Raw_data.append(Raw_data, ignore_index=True)  
 
         print(Raw_data['probeId'].value_counts(dropna=False))
 
@@ -105,11 +107,11 @@ def func_preprocess(AOP_data):
         probeType = []
         energy = []
 
-        for probe_type, volt, cycle, element, prf, pitch, scanrange in zip(AOP_data['probeDescription'],
-                                                                           AOP_data['pulseVoltage'],
-                                                                AOP_data['numTxCycles'], AOP_data['numTxElements'],
-                                                                AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
-                                                                AOP_data['scanRange']):
+        ## 온도데이터를 계산하기 위하여 새로운 parameter 생성 --> energy 영역 설정.
+        for probe_type, volt, cycle, element, prf, pitch, scanrange in zip(AOP_data['probeDescription'], AOP_data['pulseVoltage'], AOP_data['numTxCycles'], 
+                                                                           AOP_data['numTxElements'], AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
+                                                                           AOP_data['scanRange']):
+            
             if scanrange == 0:
                 SR = 0.001
             else:
@@ -123,10 +125,11 @@ def func_preprocess(AOP_data):
             else:  ## Phased
                 probeType.append(2)
 
+        
         AOP_data['probeType'] = probeType
         AOP_data['energy'] = energy
         AOP_data = AOP_data.fillna(0)
-        print(AOP_data.head())
+        print('AOP data확인:', AOP_data.head())
 
         data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                          'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
@@ -159,12 +162,14 @@ def func_machine_learning(selected_ML, data, target):
             print('Random Forest - Test R^2:', np.round_(model.score(test_input, test_target), 3))
             prediction = np.round_(model.predict(test_input), 2)
 
+            
+            ## each parameter 중요도 출력하여 확인하기.
             df_import = pd.DataFrame()
             df_import = df_import.append(pd.DataFrame([np.round((model.feature_importances_) * 100, 2)],
                                                       columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
-                         'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
-                         'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
-                         'probeType', 'roomTempC', 'energy']), ignore_index=True)
+                                                               'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+                                                               'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
+                                                               'probeType', 'roomTempC', 'energy']), ignore_index=True)
 
             mae = mean_absolute_error(test_target, prediction)
             print('|(타깃 - 예측값)|:', mae)
@@ -226,12 +231,9 @@ if __name__ == '__main__':
         temperature_est = loaded_model.predict(data)
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
-        df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements',
-                                               'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
-                                               'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
-                                               'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
-                                               'probeNumElements',
-                                               'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
+        df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+                                         'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm', 'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
+                                         'probeNumElements', 'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
 
         df_temp = pd.DataFrame(target, columns=['temperatureC'])
 
