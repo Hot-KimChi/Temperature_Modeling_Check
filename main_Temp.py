@@ -208,6 +208,7 @@ def func_machine_learning(selected_ML, data, target):
 
 
 ## main
+## 데이터 몇개가 들어가야 성능이 향상되는 지 확인.
 if __name__ == '__main__':
     case = 'model_predict'
 
