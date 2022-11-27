@@ -209,6 +209,7 @@ def func_machine_learning(selected_ML, data, target):
 
 ## main
 ## 데이터 몇개가 들어가야 성능이 향상되는 지 확인.
+## 1) 일반적으로 데이터 갯수를 주파수에 따라서 한개씩만 넣어서 확인.
 if __name__ == '__main__':
     case = 'model_predict'
 
