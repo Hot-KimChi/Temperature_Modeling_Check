@@ -211,14 +211,14 @@ def func_machine_learning(selected_ML, data, target):
 ## 데이터 몇개가 들어가야 성능이 향상되는 지 확인.
 ## 1) 일반적으로 데이터 갯수를 주파수에 따라서 한개씩만 넣어서 확인.
 if __name__ == '__main__':
-    case = 'model_predict'
+    case = 'model_fit'
 
     if case == 'model_fit':
         server_address, ID, password, list_databases, export_database = func_conf_get()
         AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
         print(len(AOP_data.index))
         data, target = func_preprocess(AOP_data=AOP_data)
-        ## RandomForestRegressor
+        ## RandomForestRegressor modeling
         func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
 
 
