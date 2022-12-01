@@ -28,6 +28,50 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             sel_database = [export_database]
         print(sel_database)
 
+        ## New_Trees 일 경우,         
+        if sel_database == 'New_Trees':
+            
+            for database in sel_database:
+                print(database)
+                conn = pymssql.connect(server_address, ID, password, database=database)
+
+                query = f'''
+                        SELECT
+                        a.[temperatureId]
+                        ,a.[probeId]
+                        ,a.[tempSSId]
+                        ,a.[measDate]
+                        ,a.[measSetNum]
+                        ,a.[roomTempC]
+                        ,a.[pulseVoltage]
+                        ,a.[temperatureC]
+                        ,a.[numTxCycles]
+                        ,a.[numTxElements]
+                        ,a.[txFrequencyHz]
+                        ,a.[elevAperIndex]
+                        ,a.[isTxAperModulationEn]
+                        ,a.[txpgWaveformStyle]
+                        ,a.[pulseRepetRate]
+                        ,a.[scanRange]
+                        ,b.[probeName]
+                        ,b.[probePitchCm]
+                        ,b.[probeRadiusCm]
+                        ,b.[probeElevAperCm0]
+                        ,b.[probeElevAperCm1]
+                        ,b.[probeNumElements]
+                        ,b.[probeElevFocusRangCm] 
+                        ,b.[probeDescription]
+                        FROM temperature AS a
+                        LEFT JOIN probe_geo AS b
+                            ON a.[probeId] = b.[probeId]
+                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
+                        ORDER BY 1
+                        '''
+        
+        
+        
+        
+        
         for database in sel_database:
             print(database)
             conn = pymssql.connect(server_address, ID, password, database=database)
@@ -62,7 +106,6 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                     LEFT JOIN probe_geo AS b
                         ON a.[probeId] = b.[probeId]
                     where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
-                    --where a.probeId < 99999999 and (a.measSetNum = 4)
                     ORDER BY 1
                     '''
 
@@ -238,7 +281,7 @@ if __name__ == '__main__':
                                          'probeNumElements', 'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
 
         df_temp = pd.DataFrame(target, columns=['temperatureC'])
-
+        
         df['temperatureC'] = df_temp
         df['temperature_est'] = df_temperature_est
         df.to_csv("temperature_est.csv")
