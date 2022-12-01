@@ -30,7 +30,48 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
 
         ## New_Trees 일 경우,         
         if sel_database == 'New_Trees':
+            for database in sel_database:
+                print(database)
+                conn = pymssql.connect(server_address, ID, password, database=database)
+
+                query = f'''
+                        SELECT
+                        a.[temperatureId]
+                        ,a.[probeId]
+                        ,a.[tempSSId]
+                        ,a.[measDate]
+                        ,a.[measSetNum]
+                        ,a.[roomTempC]
+                        ,a.[pulseVoltage]
+                        ,a.[temperatureC]
+                        ,a.[numTxCycles]
+                        ,a.[numTxElements]
+                        ,a.[txFrequencyHz]
+                        ,a.[elevAperIndex]
+                        ,a.[isTxAperModulationEn]
+                        ,a.[txpgWaveformStyle]
+                        ,a.[pulseRepetRate]
+                        ,a.[scanRange]
+                        ,b.[probeName]
+                        ,b.[probePitchCm]
+                        ,b.[probeRadiusCm]
+                        ,b.[probeElevAperCm0]
+                        ,b.[probeElevAperCm1]
+                        ,b.[probeNumElements]
+                        ,b.[probeElevFocusRangCm] 
+                        ,b.[probeDescription]
+                        FROM temperature AS a
+                        LEFT JOIN probe_geo AS b
+                            ON a.[probeId] = b.[probeId]
+                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4) and (pulseVoltage = 90 or pulseVoltage = 93)  
+                        ORDER BY 1
+                        '''
+            Raw_data = pd.read_sql(sql=query, con=conn)
+            # AOP_data = Raw_data.dropna()
+            Raw_data.insert(0, "Database", f'{database}', True)
             
+        ## New_Trees 외에 데이터베이스.
+        else:
             for database in sel_database:
                 print(database)
                 conn = pymssql.connect(server_address, ID, password, database=database)
@@ -67,54 +108,13 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
                         ORDER BY 1
                         '''
-        
-        
-        
-        
-        
-        for database in sel_database:
-            print(database)
-            conn = pymssql.connect(server_address, ID, password, database=database)
-
-            query = f'''
-                    SELECT
-                     a.[temperatureId]
-                    ,a.[probeId]
-                    ,a.[tempSSId]
-                    ,a.[measDate]
-                    ,a.[measSetNum]
-                    ,a.[roomTempC]
-                    ,a.[pulseVoltage]
-                    ,a.[temperatureC]
-                    ,a.[numTxCycles]
-                    ,a.[numTxElements]
-                    ,a.[txFrequencyHz]
-                    ,a.[elevAperIndex]
-                    ,a.[isTxAperModulationEn]
-                    ,a.[txpgWaveformStyle]
-                    ,a.[pulseRepetRate]
-                    ,a.[scanRange]
-                    ,b.[probeName]
-                    ,b.[probePitchCm]
-                    ,b.[probeRadiusCm]
-                    ,b.[probeElevAperCm0]
-                    ,b.[probeElevAperCm1]
-                    ,b.[probeNumElements]
-                    ,b.[probeElevFocusRangCm] 
-                    ,b.[probeDescription]
-                    FROM temperature AS a
-                    LEFT JOIN probe_geo AS b
-                        ON a.[probeId] = b.[probeId]
-                    where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
-                    ORDER BY 1
-                    '''
 
             Raw_data = pd.read_sql(sql=query, con=conn)
             # AOP_data = Raw_data.dropna()
             Raw_data.insert(0, "Database", f'{database}', True)
             
             ## DataFrame append할 경우, 동일한 parameter 갯수. // ignore_index(True) 인덱스가 기존해의 뒷 번호로 지정
-            AOP_data = Raw_data.append(Raw_data, ignore_index=True)  
+        AOP_data = Raw_data.append(Raw_data, ignore_index=True)  
 
         print(Raw_data['probeId'].value_counts(dropna=False))
 
