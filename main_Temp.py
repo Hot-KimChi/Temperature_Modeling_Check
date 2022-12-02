@@ -28,12 +28,13 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             sel_database = [export_database]
         print(sel_database)
 
-        ## New_Trees 일 경우,         
-        if sel_database == 'New_Trees':
-            for database in sel_database:
-                print(database)
-                conn = pymssql.connect(server_address, ID, password, database=database)
+        list_of_df =[]
+        for database in sel_database:
+            print('-----------------')
+            print('connect:', database)
+            conn = pymssql.connect(server_address, ID, password, database=database)
 
+            if database == 'New_Trees':
                 query = f'''
                         SELECT
                         a.[temperatureId]
@@ -63,19 +64,11 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4) and (pulseVoltage = 90 or pulseVoltage = 93)  
+                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4) and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
                         ORDER BY 1
                         '''
-            Raw_data = pd.read_sql(sql=query, con=conn)
-            # AOP_data = Raw_data.dropna()
-            Raw_data.insert(0, "Database", f'{database}', True)
             
-        ## New_Trees 외에 데이터베이스.
-        else:
-            for database in sel_database:
-                print(database)
-                conn = pymssql.connect(server_address, ID, password, database=database)
-
+            else:    
                 query = f'''
                         SELECT
                         a.[temperatureId]
@@ -112,11 +105,14 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             Raw_data = pd.read_sql(sql=query, con=conn)
             # AOP_data = Raw_data.dropna()
             Raw_data.insert(0, "Database", f'{database}', True)
-            
             ## DataFrame append할 경우, 동일한 parameter 갯수. // ignore_index(True) 인덱스가 기존해의 뒷 번호로 지정
-        AOP_data = Raw_data.append(Raw_data, ignore_index=True)  
+            print('data 갯수:', len(Raw_data.index))
+            list_of_df.append(Raw_data)
 
-        print(Raw_data['probeId'].value_counts(dropna=False))
+        AOP_data = pd.concat(list_of_df)
+        print('-----------------')
+        print('Probe 종류 및 갯수')
+        print(AOP_data['probeId'].value_counts(dropna=False))
 
         return AOP_data
 
@@ -172,7 +168,7 @@ def func_preprocess(AOP_data):
         AOP_data['probeType'] = probeType
         AOP_data['energy'] = energy
         AOP_data = AOP_data.fillna(0)
-        print('AOP data확인:', AOP_data.head())
+        print(AOP_data.head())
 
         data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                          'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
@@ -259,7 +255,8 @@ if __name__ == '__main__':
     if case == 'model_fit':
         server_address, ID, password, list_databases, export_database = func_conf_get()
         AOP_data = func_sql_get(server_address=server_address, ID=ID, password=password, list_databases=list_databases)
-        print(len(AOP_data.index))
+        print('-----------------')
+        print('데이터 총합:', len(AOP_data.index))
         data, target = func_preprocess(AOP_data=AOP_data)
         ## RandomForestRegressor modeling
         func_machine_learning(selected_ML='RandomForestRegressor', data=data, target=target)
