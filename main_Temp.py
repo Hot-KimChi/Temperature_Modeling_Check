@@ -19,6 +19,7 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 
+
 def func_sql_get(server_address, ID, password, list_databases, export_database=None, query=None):
     try:
         if case == 'model_fit':
@@ -188,6 +189,7 @@ def func_machine_learning(selected_ML, data, target):
         train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2)
 
         ## Random Forest 훈련하기.
+        ## Random Forest parameter 확인.
         if selected_ML == 'RandomForestRegressor':
             from sklearn.ensemble import RandomForestRegressor
             model = RandomForestRegressor(n_jobs=-1)
