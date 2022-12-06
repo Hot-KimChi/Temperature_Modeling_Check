@@ -192,7 +192,34 @@ def func_machine_learning(selected_ML, data, target):
         ## Random Forest parameter 확인.
         if selected_ML == 'RandomForestRegressor':
             from sklearn.ensemble import RandomForestRegressor
-            model = RandomForestRegressor(n_jobs=-1)
+            from scipy.stats import uniform, randint
+            from sklearn.model_selection import RandomizedSearchCV
+            
+            # hyperparameter 세팅 시, 진행.
+            # n_estimators = randint(20, 100)                             ## number of trees in the random forest
+            # max_features = ['auto', 'sqrt']                             ## number of features in consideration at every split
+            # max_depth = [int(x) for x in np.linspace(10, 120, num=12)]  ## maximum number of levels allowed in each decision tree
+            # min_samples_split = [2, 6, 10]                              ## minimum sample number to split a node
+            # min_samples_leaf = [1, 3, 4]                              ## minimum sample number that can be stored in a leaf node
+            # bootstrap = [True, False]                                 ## method used to sample data points
+            
+            # random_grid = {'n_estimators': n_estimators,
+            #                 'max_features': max_features,
+            #                 'max_depth': max_depth,
+            #                 'min_samples_split': min_samples_split,
+            #                 'min_samples_leaf': min_samples_leaf,
+            #                 'bootstrap': bootstrap}
+            
+            # # RandomizedSearchCV에서 fit이 완료.
+            # rf = RandomForestRegressor()
+            # model = RandomizedSearchCV(estimator = rf, param_distributions = random_grid,
+            #                             n_iter = 300, cv = 5, verbose=2, n_jobs = -1)
+            
+            # model.fit(train_input, train_target)
+            # print(model.best_params_)
+    
+            
+            model = RandomForestRegressor(bootstrap='False', max_depth=40, max_features='sqrt', min_samples_leaf=1, min_samples_split=2, n_estimators=72, n_jobs=-1)
             scores = cross_validate(model, train_input, train_target, return_train_score=True, n_jobs=-1)
             print()
             print(scores)
