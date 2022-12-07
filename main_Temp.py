@@ -68,7 +68,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4) and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
                         ORDER BY 1
                         '''
-            
+            ##and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
             else:    
                 query = f'''
                         SELECT
@@ -159,15 +159,20 @@ def func_preprocess(AOP_data):
             energy.append(volt * volt * cycle * element * prf * pitch / SR)
 
             if "Convex" or "Curved" in probe_type:
-                probeType.append(0)
+                probeType.append('C')
             elif "Linear" in probe_type:
-                probeType.append(1)
+                probeType.append('L')
             else:  ## Phased
-                probeType.append(2)
+                probeType.append('P')
 
+        
         
         AOP_data['probeType'] = probeType
         AOP_data['energy'] = energy
+        
+        from sklearn.preprocessing import OneHotEncoder
+        ohe = 
+        
         AOP_data = AOP_data.fillna(0)
         print(AOP_data.head())
 
@@ -189,19 +194,19 @@ def func_machine_learning(selected_ML, data, target):
         train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2)
 
         ## Random Forest 훈련하기.
-        ## Random Forest parameter 확인.
         if selected_ML == 'RandomForestRegressor':
             from sklearn.ensemble import RandomForestRegressor
             from scipy.stats import uniform, randint
             from sklearn.model_selection import RandomizedSearchCV
             
+            ## RandomForest hyperparameter setting.
             # hyperparameter 세팅 시, 진행.
             # n_estimators = randint(20, 100)                             ## number of trees in the random forest
             # max_features = ['auto', 'sqrt']                             ## number of features in consideration at every split
             # max_depth = [int(x) for x in np.linspace(10, 120, num=12)]  ## maximum number of levels allowed in each decision tree
             # min_samples_split = [2, 6, 10]                              ## minimum sample number to split a node
-            # min_samples_leaf = [1, 3, 4]                              ## minimum sample number that can be stored in a leaf node
-            # bootstrap = [True, False]                                 ## method used to sample data points
+            # min_samples_leaf = [1, 3, 4]                                ## minimum sample number that can be stored in a leaf node
+            # bootstrap = [True, False]                                   ## method used to sample data points
             
             # random_grid = {'n_estimators': n_estimators,
             #                 'max_features': max_features,
@@ -210,16 +215,25 @@ def func_machine_learning(selected_ML, data, target):
             #                 'min_samples_leaf': min_samples_leaf,
             #                 'bootstrap': bootstrap}
             
+            # param = {'n_estimators': randint(20, 100),                              ## number of trees in the random forest
+            #          'min_impurity_decrease': uniform(0.0001, 0.001),               ## number of trees in 
+            #          'max_features': ['auto', 'sqrt'],                              ## number of features in consideration at every split
+            #          'max_depth': [int(x) for x in np.linspace(10, 120, num=12)],   ## maximum number of levels allowed in each decision tree
+            #          'min_samples_split': [2, 6, 10],                               ## minimum sample number to split a node
+            #          'min_samples_leaf': [1, 3, 4],                                 ## minimum sample number that can be stored in a leaf node
+            #          'bootstrap': [True, False]                                     ## method used to sample data points}
+            #          }
+            
+            
             # # RandomizedSearchCV에서 fit이 완료.
             # rf = RandomForestRegressor()
-            # model = RandomizedSearchCV(estimator = rf, param_distributions = random_grid,
-            #                             n_iter = 300, cv = 5, verbose=2, n_jobs = -1)
+            # model = RandomizedSearchCV(estimator = rf, param_distributions = param, n_iter = 300, cv = 5, verbose=2, n_jobs = -1)
             
             # model.fit(train_input, train_target)
             # print(model.best_params_)
     
             
-            model = RandomForestRegressor(bootstrap='False', max_depth=40, max_features='sqrt', min_samples_leaf=1, min_samples_split=2, n_estimators=72, n_jobs=-1)
+            model = RandomForestRegressor(bootstrap='False', max_depth=90, max_features='sqrt', min_impurity_decrease=0.0002851788830467556, min_samples_leaf=1, min_samples_split=2, n_estimators=95, n_jobs=-1)
             scores = cross_validate(model, train_input, train_target, return_train_score=True, n_jobs=-1)
             print()
             print(scores)
