@@ -170,8 +170,18 @@ def func_preprocess(AOP_data):
         AOP_data['probeType'] = probeType
         AOP_data['energy'] = energy
         
+        ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
-        ohe = 
+        ohe = OneHotEncoder(sparse=False)
+        AOP_data = ohe.fit_transform(AOP_data[['probeType']])
+        
+        ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요
+        pd.DataFrame(AOP_data, columns=['probeType_' + col for col in ohe.categories_[0]])
+        
+        pd.concat([AOP_data.drop(columns=['probeType']), pd.DataFrame(AOP_data, columns=['probeType' + col for col in ohe.categories_[0]])], axis=1)
+        
+        print(AOP_data.head())
+        
         
         AOP_data = AOP_data.fillna(0)
         print(AOP_data.head())
