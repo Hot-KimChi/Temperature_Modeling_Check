@@ -160,29 +160,24 @@ def func_preprocess(AOP_data):
                 SR = scanrange
             energy.append(volt * volt * cycle * element * prf * pitch / SR)
 
-            temp = probe_type.replace("Linear", "L")
-            probeType.append(temp)
-            # probeType.append(probe_type.replace("Curved", "C"))
-            # probeType.append(probe_type.replace("Linear", "L"))
-            # probeType.append(probe_type.replace("Phased", "P"))
-            # probeType.append(probe_type.replace("AcuNav_Phased", "P"))
-            
-            # C_type = probe_type.replace("Convex", "C")
-            # L_type = probe_type.replace("Linear", "L")
-            # P_type = probe_type.replace("Phased", "P")
-            #     Type = 'C'
-            
-            # if "convex" or "curved" in probe_type:
-            #     Type ='C'
-            # elif "Linear" in probe_type:
-            #     Type = 'L'
-            # else:  ## Phased
-            #     Type = 'P'
-            # probeType.append(Type)
-       
+            if probe_type == 'Linear': 
+                Type = 'L'
+            elif probe_type == 'Curved':
+                Type = 'C'
+            elif probe_type == 'Convex':
+                Type = 'C'
+            elif probe_type == 'Phased':
+                Type = 'P'
+            elif probe_type == 'AcuNav_Phased':
+                Type = 'P'
+            probeType.append(Type)
+
         
         AOP_data['probeType'] = probeType
         AOP_data['energy'] = energy
+        
+        ## 누락된 데이터 삭제
+        AOP_data = AOP_data.dropna(subset=['probeNumElements'])
         AOP_data.to_csv('probeType_check.csv')
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
