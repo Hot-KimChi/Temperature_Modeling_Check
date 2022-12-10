@@ -65,7 +65,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4) and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
+                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4) and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
                         ORDER BY 1
                         '''
             ##and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
@@ -99,7 +99,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where a.probeId < 99999999 and (a.measSetNum = 3 or a.measSetNum = 4)  
+                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4)  
                         ORDER BY 1
                         '''
 
@@ -111,6 +111,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             list_of_df.append(Raw_data)
 
         AOP_data = pd.concat(list_of_df)
+        
         print('-----------------')
         print('Probe 종류 및 갯수')
         print(AOP_data['probeId'].value_counts(dropna=False))
@@ -146,7 +147,8 @@ def func_preprocess(AOP_data):
     try:
         probeType = []
         energy = []
-
+        
+        
         ## 온도데이터를 계산하기 위하여 새로운 parameter 생성 --> energy 영역 설정.
         for probe_type, volt, cycle, element, prf, pitch, scanrange in zip(AOP_data['probeDescription'], AOP_data['pulseVoltage'], AOP_data['numTxCycles'], 
                                                                            AOP_data['numTxElements'], AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
@@ -158,18 +160,30 @@ def func_preprocess(AOP_data):
                 SR = scanrange
             energy.append(volt * volt * cycle * element * prf * pitch / SR)
 
-            if "Convex" or "Curved" in probe_type:
-                probeType.append('C')
-            elif "Linear" in probe_type:
-                probeType.append('L')
-            else:  ## Phased
-                probeType.append('P')
-
-        
+            temp = probe_type.replace("Linear", "L")
+            probeType.append(temp)
+            # probeType.append(probe_type.replace("Curved", "C"))
+            # probeType.append(probe_type.replace("Linear", "L"))
+            # probeType.append(probe_type.replace("Phased", "P"))
+            # probeType.append(probe_type.replace("AcuNav_Phased", "P"))
+            
+            # C_type = probe_type.replace("Convex", "C")
+            # L_type = probe_type.replace("Linear", "L")
+            # P_type = probe_type.replace("Phased", "P")
+            #     Type = 'C'
+            
+            # if "convex" or "curved" in probe_type:
+            #     Type ='C'
+            # elif "Linear" in probe_type:
+            #     Type = 'L'
+            # else:  ## Phased
+            #     Type = 'P'
+            # probeType.append(Type)
+       
         
         AOP_data['probeType'] = probeType
-        
         AOP_data['energy'] = energy
+        AOP_data.to_csv('probeType_check.csv')
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
