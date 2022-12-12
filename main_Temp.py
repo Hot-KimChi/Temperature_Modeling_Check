@@ -145,21 +145,30 @@ def func_conf_get():
 
 def func_preprocess(AOP_data):
     try:
+         ## 누락된 데이터 삭제
+        AOP_data = AOP_data.dropna(subset=['probeNumElements'])
+        
         probeType = []
         energy = []
         
+        ## probeDescription에 데이터가 어떠한 것이 들어있는지 확인.
+        print(AOP_data['probeDescription'].unique())
         
         ## 온도데이터를 계산하기 위하여 새로운 parameter 생성 --> energy 영역 설정.
         for probe_type, volt, cycle, element, prf, pitch, scanrange in zip(AOP_data['probeDescription'], AOP_data['pulseVoltage'], AOP_data['numTxCycles'], 
                                                                            AOP_data['numTxElements'], AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
                                                                            AOP_data['scanRange']):
             
+            ## New parameter add: energy(volt, cycle, element, prf, pitch, scanrange)
             if scanrange == 0:
                 SR = 0.001
             else:
                 SR = scanrange
+            ## array 생성(for문 돌려서 각 행마다 변환)
             energy.append(volt * volt * cycle * element * prf * pitch / SR)
-
+            
+            
+            ## probe_type에 따른 데이터 정렬. 
             if probe_type == 'Linear': 
                 Type = 'L'
             elif probe_type == 'Curved':
@@ -170,31 +179,21 @@ def func_preprocess(AOP_data):
                 Type = 'P'
             elif probe_type == 'AcuNav_Phased':
                 Type = 'P'
+            ## array 생성(for문 돌려서 각 행마다 변환)
             probeType.append(Type)
-
         
+        ## array 데이터를 데이터프레임 parameter에 입력.
+        AOP_data['Energy'] = energy        
         AOP_data['probeType'] = probeType
-        AOP_data['energy'] = energy
         
-        ## 누락된 데이터 삭제
-        AOP_data = AOP_data.dropna(subset=['probeNumElements'])
-        AOP_data.to_csv('probeType_check.csv')
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
         ohe = OneHotEncoder(sparse=False)
+        ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
         ohe_probe = ohe.fit_transform(AOP_data[['probeType']])
-        
-        print(ohe.categories_)
-        # ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요
-        AOP_data_probe = pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])
-        print(AOP_data_probe.head())
-        
-        AOP_data.drop(columns=['probeType'])
-        AOP_data = pd.concat([AOP_data, AOP_data_probe], axis=1)
-        
-        # pd.concat([AOP_data.drop(columns=['probeType']), pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])], axis=1)
-        
+        ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요.
+        AOP_data = pd.concat([AOP_data.drop(columns=['probeType']), pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])], axis=1)
         
         print(AOP_data.head())
         
@@ -205,7 +204,7 @@ def func_preprocess(AOP_data):
         data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                          'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
                          'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
-                         'probeType', 'roomTempC', 'energy']].to_numpy()
+                         'probeType_C', 'probeType_L', 'probeType_P','roomTempC', 'energy']].to_numpy()
 
         target = AOP_data['temperatureC'].to_numpy()
 
