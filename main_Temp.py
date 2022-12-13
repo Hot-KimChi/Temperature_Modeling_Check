@@ -17,6 +17,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
+pd.options.mode.chained_assignment = None 
 
 
 
@@ -183,17 +184,33 @@ def func_preprocess(AOP_data):
             probeType.append(Type)
         
         ## array 데이터를 데이터프레임 parameter에 입력.
-        AOP_data['Energy'] = energy        
+        AOP_data['energy'] = energy        
         AOP_data['probeType'] = probeType
         
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
         ohe = OneHotEncoder(sparse=False)
-        ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
-        ohe_probe = ohe.fit_transform(AOP_data[['probeType']])
+        
+        if case == 'model_fit':
+            ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
+            print('model_fit')
+            ohe_probe = ohe.fit_transform(AOP_data[['probeType']])
+            
+        else:
+            print('model_predict')
+            ohe_proby = ohe.transform(AOP_data[['probeType']])
+                    
         ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요.
-        AOP_data = pd.concat([AOP_data.drop(columns=['probeType']), pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])], axis=1)
+        df_ohe_probe = pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])
+        
+        AOP_data = AOP_data.drop(columns=['probeType'])
+        
+        
+        # df_ohe_probe.reset_index(drop=True, inplace=True)
+        
+        AOP_data.reset_index(drop=True, inplace=True)
+        AOP_data = pd.concat([AOP_data, df_ohe_probe], axis=1)
         
         print(AOP_data.head())
         
@@ -201,10 +218,16 @@ def func_preprocess(AOP_data):
         AOP_data = AOP_data.fillna(0)
         print(AOP_data.head())
 
-        data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+        # data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+        #                  'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+        #                  'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
+        #                  'probeType_C', 'probeType_L', 'probeType_P','roomTempC', 'energy']].to_numpy()
+        
+        data = AOP_data[['pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                          'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
                          'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
                          'probeType_C', 'probeType_L', 'probeType_P','roomTempC', 'energy']].to_numpy()
+        
 
         target = AOP_data['temperatureC'].to_numpy()
 
@@ -240,6 +263,8 @@ def func_machine_learning(selected_ML, data, target):
             #                 'min_samples_leaf': min_samples_leaf,
             #                 'bootstrap': bootstrap}
             
+            ## ----------------------
+            ## hyperparameter setting
             # param = {'n_estimators': randint(20, 100),                              ## number of trees in the random forest
             #          'min_impurity_decrease': uniform(0.0001, 0.001),               ## number of trees in 
             #          'max_features': ['auto', 'sqrt'],                              ## number of features in consideration at every split
@@ -256,9 +281,10 @@ def func_machine_learning(selected_ML, data, target):
             
             # model.fit(train_input, train_target)
             # print(model.best_params_)
-    
+            ## -----------------------
             
-            model = RandomForestRegressor(bootstrap='False', max_depth=90, max_features='sqrt', min_impurity_decrease=0.0002851788830467556, min_samples_leaf=1, min_samples_split=2, n_estimators=95, n_jobs=-1)
+            
+            model = RandomForestRegressor(bootstrap='False', max_depth=80, max_features='sqrt', min_impurity_decrease=0.00022562377192675146, min_samples_leaf=1, min_samples_split=2, n_estimators=90, n_jobs=-1)
             scores = cross_validate(model, train_input, train_target, return_train_score=True, n_jobs=-1)
             print()
             print(scores)
@@ -272,11 +298,16 @@ def func_machine_learning(selected_ML, data, target):
             
             ## each parameter 중요도 출력하여 확인하기.
             df_import = pd.DataFrame()
+            # df_import = df_import.append(pd.DataFrame([np.round((model.feature_importances_) * 100, 2)],
+            #                                           columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+            #                                                    'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+            #                                                    'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
+            #                                                    'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy']), ignore_index=True)
             df_import = df_import.append(pd.DataFrame([np.round((model.feature_importances_) * 100, 2)],
-                                                      columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
+                                                      columns=['pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
                                                                'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
                                                                'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements', 'probeElevFocusRangCm',
-                                                               'probeType', 'roomTempC', 'energy']), ignore_index=True)
+                                                               'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy']), ignore_index=True)
 
             mae = mean_absolute_error(test_target, prediction)
             print('|(타깃 - 예측값)|:', mae)
@@ -292,16 +323,22 @@ def func_machine_learning(selected_ML, data, target):
         temperature_est = loaded_model.predict(test_input)
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
-        df = pd.DataFrame(test_input, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements',
+        # df = pd.DataFrame(test_input, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements',
+        #                                        'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+        #                                        'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
+        #                                        'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements',
+        #                                        'probeElevFocusRangCm', 'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy'])
+        
+        df = pd.DataFrame(test_input, columns=['pulseVoltage', 'numTxCycles', 'numTxElements',
                                                'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
                                                'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
                                                'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1', 'probeNumElements',
-                                               'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
+                                               'probeElevFocusRangCm', 'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy'])
 
         df_temp = pd.DataFrame(test_target, columns=['temperatureC'])
         df['temperatureC'] = df_temp
         df['temperature_est'] = df_temperature_est
-        df.to_csv("temperature_test_input_est.csv")
+        df.to_csv("temperature_train_score.csv")
 
         if selected_ML == 'RandomForestRegressor':
             pass
@@ -318,7 +355,7 @@ def func_machine_learning(selected_ML, data, target):
 ## 데이터 몇개가 들어가야 성능이 향상되는 지 확인.
 ## 1) 일반적으로 데이터 갯수를 주파수에 따라서 한개씩만 넣어서 확인.
 if __name__ == '__main__':
-    case = 'model_fit'
+    case = 'model_predict'
 
     if case == 'model_fit':
         server_address, ID, password, list_databases, export_database = func_conf_get()
@@ -339,11 +376,12 @@ if __name__ == '__main__':
 
         loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
         temperature_est = loaded_model.predict(data)
+        print('model_predict', temperature_est)
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
         df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
                                          'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm', 'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
-                                         'probeNumElements', 'probeElevFocusRangCm', 'probeType', 'roomTempC', 'energy'])
+                                         'probeNumElements', 'probeElevFocusRangCm', 'probeType_C', 'roomTempC', 'energy'])
 
         df_temp = pd.DataFrame(target, columns=['temperatureC'])
         
