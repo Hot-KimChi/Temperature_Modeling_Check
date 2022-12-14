@@ -66,7 +66,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4) and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
+                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4)
                         ORDER BY 1
                         '''
             ##and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
@@ -194,12 +194,14 @@ def func_preprocess(AOP_data):
         
         if case == 'model_fit':
             ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
-            print('model_fit')
-            ohe_probe = ohe.fit_transform(AOP_data[['probeType']])
-            
+            ohe.fit(AOP_data[['probeType']])
+            joblib.dump(ohe, 'ohe_probe.joblib')
+            ohe_probe = ohe.transform(AOP_data[['probeType']])
+                        
         else:
-            print('model_predict')
-            ohe_proby = ohe.transform(AOP_data[['probeType']])
+            ohe = joblib.load('ohe_probe.joblib')
+            print(ohe)
+            ohe_probe = ohe.transform(AOP_data[['probeType']])
                     
         ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요.
         df_ohe_probe = pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])
@@ -312,6 +314,7 @@ def func_machine_learning(selected_ML, data, target):
             mae = mean_absolute_error(test_target, prediction)
             print('|(타깃 - 예측값)|:', mae)
             print(df_import)
+            df_import.to_csv('df_import.csv')
 
         ## modeling file 저장 장소.
         newpath = './Model'
@@ -379,9 +382,13 @@ if __name__ == '__main__':
         print('model_predict', temperature_est)
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
-        df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
-                                         'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm', 'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
-                                         'probeNumElements', 'probeElevFocusRangCm', 'probeType_C', 'roomTempC', 'energy'])
+        # df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+        #                                  'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm', 'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
+        #                                  'probeNumElements', 'probeElevFocusRangCm', 'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy'])
+        
+        df = pd.DataFrame(data, columns=['pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
+                                    'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm', 'probeRadiusCm', 'probeElevAperCm0', 'probeElevAperCm1',
+                                    'probeNumElements', 'probeElevFocusRangCm', 'probeType_C', 'probeType_L','probeType_P', 'roomTempC', 'energy'])
 
         df_temp = pd.DataFrame(target, columns=['temperatureC'])
         
