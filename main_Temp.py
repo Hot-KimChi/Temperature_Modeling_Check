@@ -66,7 +66,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4)
+                        where (a.probeId < 99999999 and a.probeId > 100)
                         ORDER BY 1
                         '''
             ##and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
@@ -120,7 +120,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
         return AOP_data
 
 
-    except():
+    except:
         print('error: func_sql_get')
 
 
