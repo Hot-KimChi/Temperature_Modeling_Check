@@ -36,71 +36,110 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             print('connect:', database)
             conn = pymssql.connect(server_address, ID, password, database=database)
 
-            if database == 'New_Trees':
+            ## model_fit & New Trees 케이스인 경우만 동작
+            if database == 'New_Trees' and case == 'model_fit':
                 query = f'''
                         SELECT
-                        a.[temperatureId]
-                        ,a.[probeId]
-                        ,a.[tempSSId]
-                        ,a.[measDate]
-                        ,a.[measSetNum]
-                        ,a.[roomTempC]
-                        ,a.[pulseVoltage]
-                        ,a.[temperatureC]
-                        ,a.[numTxCycles]
-                        ,a.[numTxElements]
-                        ,a.[txFrequencyHz]
-                        ,a.[elevAperIndex]
-                        ,a.[isTxAperModulationEn]
-                        ,a.[txpgWaveformStyle]
-                        ,a.[pulseRepetRate]
-                        ,a.[scanRange]
-                        ,b.[probeName]
-                        ,b.[probePitchCm]
-                        ,b.[probeRadiusCm]
-                        ,b.[probeElevAperCm0]
-                        ,b.[probeElevAperCm1]
-                        ,b.[probeNumElements]
-                        ,b.[probeElevFocusRangCm] 
-                        ,b.[probeDescription]
+                        a.[temperatureId],
+                        a.[probeId],
+                        a.[tempSSId],
+                        a.[measDate],
+                        a.[measSetNum],
+                        a.[roomTempC],
+                        a.[pulseVoltage],
+                        a.[temperatureC],
+                        a.[numTxCycles],
+                        a.[numTxElements],
+                        a.[txFrequencyHz],
+                        a.[elevAperIndex],
+                        a.[isTxAperModulationEn],
+                        a.[txpgWaveformStyle],
+                        a.[pulseRepetRate],
+                        a.[IsSCW],
+                        a.[scanRange],
+                        b.[probeName],
+                        b.[probePitchCm],
+                        b.[probeRadiusCm],
+                        b.[probeElevAperCm0],
+                        b.[probeElevAperCm1],
+                        b.[probeNumElements],
+                        b.[probeElevFocusRangCm],
+                        b.[probeDescription]
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where (a.probeId < 99999999 and a.probeId > 100)
+                        where (a.probeId < 99999999 and a.probeId > 100) and a.IsSCW = 0 and (a.pulseVoltage = 90 or a.pulseVoltage = 93) and a.pulseRepetRate < 100000 and b.probeElevAperCm0 != 0
                         ORDER BY 1
                         '''
-            ##and (a.pulseVoltage = 90 or a.pulseVoltage = 93)
+            
+            elif database == 'New_Trees' and case == 'model_predict':
+                query = f'''
+                        SELECT
+                        a.[temperatureId],
+                        a.[probeId],
+                        a.[tempSSId],
+                        a.[measDate],
+                        a.[measSetNum],
+                        a.[roomTempC],
+                        a.[pulseVoltage],
+                        a.[temperatureC],
+                        a.[numTxCycles],
+                        a.[numTxElements],
+                        a.[txFrequencyHz],
+                        a.[elevAperIndex],
+                        a.[isTxAperModulationEn],
+                        a.[txpgWaveformStyle],
+                        a.[pulseRepetRate],
+                        a.[IsSCW],
+                        a.[scanRange],
+                        b.[probeName],
+                        b.[probePitchCm],
+                        b.[probeRadiusCm],
+                        b.[probeElevAperCm0],
+                        b.[probeElevAperCm1],
+                        b.[probeNumElements],
+                        b.[probeElevFocusRangCm],
+                        b.[probeDescription]
+                        FROM temperature AS a
+                        LEFT JOIN probe_geo AS b
+                            ON a.[probeId] = b.[probeId]
+                        where (a.probeId < 99999999 and a.probeId > 100) and a.IsSCW = 0 and a.pulseRepetRate < 100000 and b.probeElevAperCm0 != 0
+                        ORDER BY 1
+                        '''
+                        
+            ## model_fit and model_predict 모두 동작.
             else:    
                 query = f'''
                         SELECT
-                        a.[temperatureId]
-                        ,a.[probeId]
-                        ,a.[tempSSId]
-                        ,a.[measDate]
-                        ,a.[measSetNum]
-                        ,a.[roomTempC]
-                        ,a.[pulseVoltage]
-                        ,a.[temperatureC]
-                        ,a.[numTxCycles]
-                        ,a.[numTxElements]
-                        ,a.[txFrequencyHz]
-                        ,a.[elevAperIndex]
-                        ,a.[isTxAperModulationEn]
-                        ,a.[txpgWaveformStyle]
-                        ,a.[pulseRepetRate]
-                        ,a.[scanRange]
-                        ,b.[probeName]
-                        ,b.[probePitchCm]
-                        ,b.[probeRadiusCm]
-                        ,b.[probeElevAperCm0]
-                        ,b.[probeElevAperCm1]
-                        ,b.[probeNumElements]
-                        ,b.[probeElevFocusRangCm] 
-                        ,b.[probeDescription]
+                        a.[temperatureId],
+                        a.[probeId],
+                        a.[tempSSId],
+                        a.[measDate],
+                        a.[measSetNum],
+                        a.[roomTempC],
+                        a.[pulseVoltage],
+                        a.[temperatureC],
+                        a.[numTxCycles],
+                        a.[numTxElements],
+                        a.[txFrequencyHz],
+                        a.[elevAperIndex],
+                        a.[isTxAperModulationEn],
+                        a.[txpgWaveformStyle],
+                        a.[pulseRepetRate],
+                        a.[IsSCW],
+                        a.[scanRange],
+                        b.[probeName],
+                        b.[probePitchCm],
+                        b.[probeRadiusCm],
+                        b.[probeElevAperCm0],
+                        b.[probeElevAperCm1],
+                        b.[probeNumElements],
+                        b.[probeElevFocusRangCm],
+                        b.[probeDescription]
                         FROM temperature AS a
                         LEFT JOIN probe_geo AS b
                             ON a.[probeId] = b.[probeId]
-                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4)  
+                        where (a.probeId < 99999999 and a.probeId > 100) and (a.measSetNum = 3 or a.measSetNum = 4) and a.IsSCW = 0 and a.pulseRepetRate < 100000 and b.probeElevAperCm0 != 0
                         ORDER BY 1
                         '''
 
@@ -148,6 +187,8 @@ def func_preprocess(AOP_data):
     try:
          ## 누락된 데이터 삭제
         AOP_data = AOP_data.dropna(subset=['probeNumElements'])
+        AOP_data = AOP_data.dropna(subset=['probeElevAperCm0'])
+                
         
         probeType = []
         energy = []
@@ -156,17 +197,18 @@ def func_preprocess(AOP_data):
         print(AOP_data['probeDescription'].unique())
         
         ## 온도데이터를 계산하기 위하여 새로운 parameter 생성 --> energy 영역 설정.
-        for probe_type, volt, cycle, element, prf, pitch, scanrange in zip(AOP_data['probeDescription'], AOP_data['pulseVoltage'], AOP_data['numTxCycles'], 
-                                                                           AOP_data['numTxElements'], AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
-                                                                           AOP_data['scanRange']):
+        for probe_type, volt, cycle, element, prf, pitch, scanrange, ypitch in zip(AOP_data['probeDescription'], AOP_data['pulseVoltage'], AOP_data['numTxCycles'], 
+                                                                                   AOP_data['numTxElements'], AOP_data['pulseRepetRate'], AOP_data['probePitchCm'],
+                                                                                   AOP_data['scanRange'], AOP_data['probeElevAperCm0']):
             
-            ## New parameter add: energy(volt, cycle, element, prf, pitch, scanrange)
+            ## New parameter add: energy(volt, cycle, element, prf, pitch, scanrange, ypitch)
             if scanrange == 0:
                 SR = 0.001
             else:
                 SR = scanrange
             ## array 생성(for문 돌려서 각 행마다 변환)
-            energy.append(volt * volt * cycle * element * prf * pitch / SR)
+            import math
+            energy.append(math.sqrt(volt * volt * cycle * element * prf * pitch * ypitch / SR))
             
             
             ## probe_type에 따른 데이터 정렬. 
@@ -186,7 +228,7 @@ def func_preprocess(AOP_data):
         ## array 데이터를 데이터프레임 parameter에 입력.
         AOP_data['energy'] = energy        
         AOP_data['probeType'] = probeType
-        
+                
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
@@ -213,12 +255,12 @@ def func_preprocess(AOP_data):
         
         AOP_data.reset_index(drop=True, inplace=True)
         AOP_data = pd.concat([AOP_data, df_ohe_probe], axis=1)
-        
-        print(AOP_data.head())
-        
+                
         
         AOP_data = AOP_data.fillna(0)
         print(AOP_data.head())
+        AOP_data.to_csv('data_check.csv')
+        
 
         # data = AOP_data[['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex',
         #                  'isTxAperModulationEn', 'txpgWaveformStyle', 'scanRange', 'pulseRepetRate', 'probePitchCm',
@@ -231,11 +273,11 @@ def func_preprocess(AOP_data):
                          'probeType_C', 'probeType_L', 'probeType_P','roomTempC', 'energy']].to_numpy()
         
 
-        target = AOP_data['temperatureC'].to_numpy()
+        target = (AOP_data['temperatureC'] - AOP_data['roomTempC']).to_numpy()
 
         return data, target
 
-    except():
+    except:
         print('error: func_preprocess')
 
 
@@ -250,6 +292,7 @@ def func_machine_learning(selected_ML, data, target):
             from sklearn.model_selection import RandomizedSearchCV
             
             ## RandomForest hyperparameter setting.
+            # 제일 처음 시도..
             # hyperparameter 세팅 시, 진행.
             # n_estimators = randint(20, 100)                             ## number of trees in the random forest
             # max_features = ['auto', 'sqrt']                             ## number of features in consideration at every split
@@ -379,7 +422,7 @@ if __name__ == '__main__':
 
         loaded_model = joblib.load('Model/RandomForestRegressor_v1_python37.pkl')
         temperature_est = loaded_model.predict(data)
-        print('model_predict', temperature_est)
+        
         df_temperature_est = pd.DataFrame(temperature_est, columns=['temperature_est'])
 
         # df = pd.DataFrame(data, columns=['probeId', 'pulseVoltage', 'numTxCycles', 'numTxElements', 'txFrequencyHz', 'elevAperIndex', 'isTxAperModulationEn',
@@ -394,7 +437,7 @@ if __name__ == '__main__':
         
         df['temperatureC'] = df_temp
         df['temperature_est'] = df_temperature_est
-        df.to_csv("temperature_est.csv")
+        df.to_csv("temperature_test_predict.csv")
 
         print(df.head())
         mae = mean_absolute_error(target, temperature_est)
