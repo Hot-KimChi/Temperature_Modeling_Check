@@ -229,35 +229,51 @@ def func_preprocess(AOP_data):
         AOP_data['energy'] = energy        
         AOP_data['probeType'] = probeType
         
-        
-        ## OneHotEncoder TxWF        
-        
+   
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
         ohe = OneHotEncoder(sparse=False)
         
+        ## model_fit일 경우, probeType OneHotEncoder 실행.
         if case == 'model_fit':
             ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
             ohe.fit(AOP_data[['probeType']])
-            joblib.dump(ohe, 'ohe_probe.joblib')
-            ohe_probe = ohe.transform(AOP_data[['probeType']])
-                        
+            joblib.dump(ohe, 'ohe_probetype.joblib')
+            ohe_probetype = ohe.transform(AOP_data[['probeType']])
+        
+        ## model_predict일 경우,    
         else:
-            ohe = joblib.load('ohe_probe.joblib')
-            print(ohe)
-            ohe_probe = ohe.transform(AOP_data[['probeType']])
+            ohe = joblib.load('ohe_probetype.joblib')
+            ohe_probetype = ohe.transform(AOP_data[['probeType']])
+            
                     
         ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요.
-        df_ohe_probe = pd.DataFrame(ohe_probe, columns=['probeType_' + col for col in ohe.categories_[0]])
+        df_ohe_probe = pd.DataFrame(ohe_probetype, columns=['probeType_' + col for col in ohe.categories_[0]])
         
         AOP_data = AOP_data.drop(columns=['probeType'])
-        
-        
-        # df_ohe_probe.reset_index(drop=True, inplace=True)
-        
         AOP_data.reset_index(drop=True, inplace=True)
-        AOP_data = pd.concat([AOP_data, df_ohe_probe], axis=1)
-                
+        AOP_data = pd.concat([AOP_data, df_ohe_probe], axis=1)        
+        
+
+        # ## model_fit일 경우, TxWF OneHotEncoder 실행.
+        # if case == 'model_fit':
+        #     ## fit_transform은 train data에만 사용하고 test data에는 학습된 인코더에 fit만 진행.
+        #     ohe.fit(AOP_data[['txpgWaveformStyle']])
+        #     joblib.dump(ohe, 'ohe_txwf.joblib')
+        #     ohe_txwf = ohe.transform(AOP_data[['txpgWaveformStyle']])
+
+        # ## model_predict일 경우,                        
+        # else:
+        #     ohe = joblib.load('ohe_txwf.joblib')
+        #     ohe_txwf = ohe.transform(AOP_data[['txpgWaveformStyle']])
+                    
+        # ## sklearn.preprocessing.OneHotEncoder를 사용하여 변환된 결과는 numpy.array이기 때문에 이를 데이터프레임으로 변환하는 과정이 필요.
+        # df_ohe_txwf = pd.DataFrame(ohe_txwf, columns=['TxWF_' + col for col in ohe.categories_[0]])
+        
+        # AOP_data = AOP_data.drop(columns=['txpgWaveformStyle'])
+        # AOP_data.reset_index(drop=True, inplace=True)
+        # AOP_data = pd.concat([AOP_data, df_ohe_txwf], axis=1)           
+        
         
         AOP_data = AOP_data.fillna(0)
         print(AOP_data.head())
