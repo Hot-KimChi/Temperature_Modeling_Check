@@ -228,7 +228,9 @@ def func_preprocess(AOP_data):
         ## array 데이터를 데이터프레임 parameter에 입력.
         AOP_data['energy'] = energy        
         AOP_data['probeType'] = probeType
-                
+        
+        
+        ## OneHotEncoder TxWF        
         
         ## OneHotEncoder 사용 ==> probeType에 들어있는 데이터를 잘못 계산 혹은 의미있는 데이터로 변환하기 위하여.
         from sklearn.preprocessing import OneHotEncoder
@@ -401,7 +403,10 @@ def func_machine_learning(selected_ML, data, target):
 ## 데이터 몇개가 들어가야 성능이 향상되는 지 확인.
 ## 1) 일반적으로 데이터 갯수를 주파수에 따라서 한개씩만 넣어서 확인.
 if __name__ == '__main__':
-    case = 'model_predict'
+    print('##############################')
+    case = input('case의 값을 입력하세요: ')
+    print('실행:', case)
+    # case = 'model_predict'
 
     if case == 'model_fit':
         server_address, ID, password, list_databases, export_database = func_conf_get()
