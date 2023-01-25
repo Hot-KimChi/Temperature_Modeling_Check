@@ -75,7 +75,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
         return AOP_data
 
 
-    except():
+    except:
         print('error: func_sql_get')
 
 
