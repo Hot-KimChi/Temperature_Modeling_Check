@@ -179,7 +179,7 @@ def func_conf_get():
         return server_address, ID, password, list_databases, export_database
 
 
-    except():
+    except:
         print('error: func_conf_get')
 
 
@@ -411,7 +411,7 @@ def func_machine_learning(selected_ML, data, target):
         else:
             pass
 
-    except():
+    except:
         print('error: func_machine_learning')
 
 
