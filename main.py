@@ -27,6 +27,7 @@ def func_sql_get(server_address, ID, password, list_databases, export_database=N
             sel_database = export_database
 
         print(sel_database)
+        
         for database in sel_database:
             print(database)
             conn = pymssql.connect(server_address, ID, password, database=database)
