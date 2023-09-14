@@ -19,6 +19,7 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 
+# SQL get algorithm
 def func_sql_get(server_address, ID, password, list_databases, export_database=None, query=None):
     try:
         if case == 'model_fit':
