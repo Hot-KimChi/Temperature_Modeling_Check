@@ -117,3 +117,4 @@ widgetsnbextension
 wrapt
 XlsxWriter
 zipp
+xgboost
